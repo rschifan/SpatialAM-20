@@ -1,0 +1,144 @@
+
+* { padding: 0; margin: 0; }
+
+html, body {
+	background-color: #222;
+    color: white;
+    min-height: 100% !important;
+    height: 100%;
+    font-family: 'Abel';
+}
+
+
+h1, h2, h3, h4, h5, p, i{
+	font-family: 'Abel';
+}
+
+#home {
+	padding:50px;
+}
+
+#home h4 {
+	padding-top: 20px;
+	font-size: 26px;
+	font-weight: bold;
+
+}
+#home ul {
+	list-style-type: none;
+	margin: 0px;
+	padding: 10px;
+}
+#home ul li {
+	padding: 10px;
+	font-size: 20px;
+	font-weight: 300;	
+}
+#home li a {
+	margin: 0px;
+	padding: 20px;
+	text-decoration: none;
+	color: white;
+	font-weight: 300;
+	font-size: 20;
+}
+
+#geocyclemap {
+	height: 100%;
+}
+
+.options {
+	color: white;
+	position: absolute; 
+	bottom: 50px; 
+	right: 10px; 
+	padding: 10px; 
+	background: rgba(0,0,0,0.6);
+    border: 1px solid #222; 
+    border-radius: 5px;
+   	z-index: 314159;
+   	line-height: 2;
+    pointer-events: none;
+}
+
+input[type=range]::-moz-range-track {
+  background-color:white;
+}
+
+.options {font-size: 18px;line-height: 18px; padding: 5px;}
+.options div {padding: 5px;}
+.options input { width: 200px; pointer-events: initial;}
+.options label { width: 50px; float: left; text-align: right; margin-right: 10px;}
+.options p { width:20px; display: inline-block; text-align: right;}
+
+
+
+
+.legend {
+    line-height: 20px;
+    font-size: 12px;
+}
+
+.legend i {
+	font-style: normal;
+	margin: 1px;
+    width: 20px;
+    height: 20px;
+    float: left;
+    opacity: 0.7;
+}
+
+.info {
+	padding: 6px 15px;
+	font: 20px;
+	background: rgba(0,0,0,0.6);
+	box-shadow: 0 0 15px rgba(0,0,0,0.2);
+	border-radius: 5px;
+}
+
+.info h4 {
+	font-size: 28px;
+	margin: 0 0 5px;
+	color: #777;
+}
+
+.info h5 {
+	font-size: 20px;
+}
+
+.info p {
+	font-variant: normal;
+	font-weight: 200;
+	font-size: 15px;
+}
+
+.stat {
+	font-variant: normal;
+	font-weight: 200;
+	font-size: 12px;
+}
+
+/* Bar Chart */
+
+#chart {
+	padding-top: 20px;
+}
+
+.bar {
+  fill: steelblue;
+  stroke: #aaa;
+  stroke-width: 1px;
+}
+
+.axis {
+  font: 10px sans-serif;
+  fill: white;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #aaa;
+  shape-rendering: crispEdges;
+}
+

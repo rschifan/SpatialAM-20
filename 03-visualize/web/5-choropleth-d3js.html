@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoCycle Tutorial - Visualize - Create an interactive Choropleth map</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href='http://fonts.googleapis.com/css?family=Abel|Source+Sans+Pro:400,300,300italic,400italic,600,600italic,700,700italic,900,900italic,200italic,200' rel='stylesheet' type='text/css'>
+	
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+	<link rel="stylesheet" href="css/easy-button/easy-button.css" />
+	<link rel="stylesheet" href="css/font-awesome/font-awesome.min.css" />
+	<link rel="stylesheet" href="css/main.css" />
+
+	<script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+	<script src="js/easy-button/easy-button.js"></script>
+	<script src="js/chroma.js/chroma.min.js"></script>
+	<script src="js/d3.js/d3.min.js"></script>
+	<script src="js/jquery/jquery-2.2.3.min.js"></script>
+	<script src="js/leaflet-heat/leaflet-heat.js"></script>
+	<script src="js/utils.js"></script>
+
+</head>
+
+<body>
+	
+	<div id="geocyclemap"></div>
+
+	<script>
+
+		var grades;
+		var color_generator;
+		var geojson;
+
+		var map = init_map('geocyclemap');
+
+		// Add home button
+		L.easyButton('fa-home', function(btn, map){
+			 window.location = "index.html";
+		}).addTo(map); 
+		
+
+		// control that shows state info on hover
+		var info = L.control();
+
+		info.onAdd = function (map) {
+			this._div = L.DomUtil.create('div', 'info');
+			this.update();
+			return this._div;
+		};
+
+
+		info.update = function (props) {
+			this._div.innerHTML = '<h4 style="width:300px">NYC Crime Map</h4>' +  (props ?
+				'<h5>' + (props.name) + ' </h5>': '<h5>Hover over a neighborhood</h5>');
+		};
+
+		info.addTo(map);
+
+
+		function updateChart(features){
+			data = []
+			xdomain = ["assault", "burglary", "larceny", "murder", "rape", "robbery"]
+			for (key in xdomain)
+				data.push({"crime":xdomain[key],"value":parseFloat(features[xdomain[key]])})
+			
+			var margin = {top: 10, right: 10, bottom: 20, left: 35},
+			    width = 300 - margin.left - margin.right,
+			    height = 200 - margin.top - margin.bottom;
+
+			var x = d3.scale.ordinal()
+			    .rangeRoundBands([0, width], .45);
+
+			var y = d3.scale.linear()
+			    .range([height, 0]);
+
+			var xAxis = d3.svg.axis()
+			    .scale(x)
+			    .orient("bottom");
+
+			var yAxis = d3.svg.axis()
+			    .scale(y)
+			    .orient("left")
+			    .ticks(10, "");
+
+			var svg = d3.select("div.info").append("svg")
+				.attr("id","chart")
+			    .attr("width", width + margin.left + margin.right)
+			    .attr("height", height + margin.top + margin.bottom)
+			  .append("g")
+			    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			x.domain(data.map(function(d) { return d.crime; }));
+  			y.domain([0, 1]);
+			
+			svg.append("g")
+			  .attr("class", "x axis")
+			  .attr("transform", "translate(0," + height + ")")
+			  .call(xAxis);
+
+			svg.append("g")
+			  .attr("class", "y axis")
+			  .call(yAxis)
+			.append("text")
+			  .attr("transform", "rotate(-90)")
+			  .attr("y", 6)
+			  .attr("dy", ".71em")
+			  .style("text-anchor", "end")
+			  .text("Frequency");
+
+			svg.selectAll(".bar").remove()
+			svg.selectAll(".bar")
+			  .data(data)
+			.enter().append("rect")
+			  .attr("class", "bar")
+			  .attr("x", function(d) { return x(d.crime); })
+			  .attr("width", x.rangeBand())
+			  .attr("y", function(d) { return y(d.value); })
+			  .attr("height", function(d) { return height - y(d.value); });
+			
+		}
+
+
+		function choropleth(attribute, data){
+			
+		  	geojson = L.geoJson(
+		  			data, 
+		  			{
+		  				style: function(feature) {
+							f_value = parseFloat(feature.properties[attribute])
+							f_color = color_generator(f_value)
+								return {	
+									color: f_color.darken(),
+									fillColor: f_color.hex(),
+									fillOpacity: 0.35, 
+									opacity: 0.6, 
+									weight:1	 
+								};
+			        		},
+			        	onEachFeature: onEachFeature
+		        	}
+		  	).addTo(map);
+		}
+
+		function addLegend(){
+				
+			// Create Legend
+			var legend = L.control({position: 'bottomright'});
+
+			legend.onAdd = function (map) {
+
+			    var div = L.DomUtil.create('div', 'info legend'),
+			        labels = [];
+
+			    // loop through our density intervals and generate a label with a colored square for each interval
+			    div.innerHTML += '<i style="opacity:1.0;"><b>MIN</b></i><br/>';
+			    for (var i = 0; i < grades.length; i++) {
+			        div.innerHTML +=
+			            '<i style="background: ' + color_generator(grades[i]).hex()+'"></i><br/>';
+			    }
+			    div.innerHTML += '<i style="opacity:1.0;"><b>MAX</b></i><br/>';
+			    return div;
+			};
+
+			legend.addTo(map);
+		}
+
+		// Add interactivity
+		function onEachFeature(feature, layer) {
+		    layer.on({
+		        mouseover: highlightFeature,
+		        mouseout: resetHighlight,
+		        click: zoomToFeature
+		    });
+		}
+
+		function highlightFeature(e) {
+		    var layer = e.target;
+
+			layer.setStyle({
+				weight: 3,
+				color: '#FFF',
+				fillOpacity: 0.8
+			});
+
+			if (!L.Browser.ie && !L.Browser.opera) {
+				layer.bringToFront();
+			}
+
+			info.update(layer.feature.properties);
+			updateChart(layer.feature.properties);
+		}
+
+		function resetHighlight(e) {
+			geojson.resetStyle(e.target);
+			info.update();
+		}
+
+		function zoomToFeature(e) {
+			map.fitBounds(e.target.getBounds());
+		}
+
+		function onEachFeature(feature, layer) {
+			layer.on({
+				mouseover: highlightFeature,
+				mouseout: resetHighlight,
+				click: zoomToFeature
+			});
+		}
+
+		// Load the GeoJSON data and create the choropleth
+		$.getJSON( "data/geojson/photo-crime-choropleth/all.json", function( data ) {
+			
+			n_buckets = 5
+			attribute = 'crimes'
+
+			grades = chroma.limits([0,1], 'e', n_buckets);
+			color_generator = chroma.scale(['#1a9850', '#ffffbf', '#d73027']).domain(grades);
+			choropleth(attribute, data);
+			addLegend();
+			
+		});
+
+
+	</script>
+</body>
+</html>

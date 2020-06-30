@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoCycle Tutorial - Visualize - Create a simple map</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href='http://fonts.googleapis.com/css?family=Abel|Source+Sans+Pro:400,300,300italic,400italic,600,600italic,700,700italic,900,900italic,200italic,200' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+	<link rel="stylesheet" href="css/easy-button/easy-button.css" />
+	<link rel="stylesheet" href="css/font-awesome/font-awesome.min.css" />
+	<link rel="stylesheet" href="css/main.css" />
+
+	<script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+	<script src="js/easy-button/easy-button.js"></script>
+	<script src="js/chroma.js/chroma.min.js"></script>
+	<script src="js/d3.js/d3.min.js"></script>
+	<script src="js/jquery/jquery-2.2.3.min.js"></script>
+	<script src="js/leaflet-heat/leaflet-heat.js"></script>
+	<script src="js/utils.js"></script>
+
+<body>
+	
+	<div id="geocyclemap"></div>
+
+	<script>
+
+		var grades;
+		var color_generator;
+		var geojson;
+		
+		var map = init_map('geocyclemap');
+
+		// Add home button
+		L.easyButton('fa-home', function(btn, map){
+			 window.location = "index.html";
+		}).addTo(map); 
+
+
+		// control that shows state info on hover
+		var info = L.control();
+
+		info.onAdd = function (map) {
+			this._div = L.DomUtil.create('div', 'info');
+			this.update();
+			return this._div;
+		};
+
+		info.update = function (props) {
+			this._div.innerHTML = '<h4>NYC Instragram Density Map</h4>' +  (props ?
+				   '<h5>Density: ' + get_value(props, "INSTAGRAM").toFixed(2) + ' n/length</h5>'
+				:  '<h5>Hover over a street segment</h5>');
+		};
+		info.addTo(map);
+
+
+		// Create Legend
+		function addLegend(){
+			var legend = L.control({position: 'bottomright'});
+
+			legend.onAdd = function (map) {
+
+			    var div = L.DomUtil.create('div', 'info legend'),
+			        labels = [];
+
+			    // loop through our density intervals and generate a label with a colored square for each interval
+			    div.innerHTML += '<i style="opacity:1.0;"><b>MIN</b></i><br/>';
+			    for (var i = 0; i < grades.length; i++) {
+			        div.innerHTML +=
+			            '<i style="background: ' + color_generator(grades[i]).hex()+'"></i><br/>';
+			    }
+			    div.innerHTML += '<i style="opacity:1.0;"><b>MAX</b></i><br/>';
+			    return div;
+			};
+			legend.addTo(map);
+		}
+
+		function plot(attribute, data){
+		  	geojson = L.geoJson(
+		  			data, 
+		  			{
+		  				
+		  				style: function(feature) {
+						
+							f_color = color_generator(get_value(feature, attribute))
+								return {	
+									color: f_color.darken(),
+									fillColor: f_color.hex(),
+									fillOpacity: 0.6, 
+									opacity: 0.7, 
+									weight: 1.5 
+								};
+			        		},
+			        	onEachFeature: onEachFeature
+		        	}
+		  	).addTo(map);
+		}
+
+
+		// Add interactivity
+		function onEachFeature(feature, layer) {
+		    layer.on({
+		        mouseover: highlightFeature,
+		        mouseout: resetHighlight,
+		        click: zoomToFeature
+		    });
+		}
+
+		function highlightFeature(e) {
+		    var layer = e.target;
+
+			layer.setStyle({
+				weight: 3,
+				color: '#FFF',
+				fillOpacity: 0.8
+			});
+
+			if (!L.Browser.ie && !L.Browser.opera) {
+				layer.bringToFront();
+			}
+
+			info.update(layer.feature);
+		}
+
+		function resetHighlight(e) {
+			geojson.resetStyle(e.target);
+			info.update();
+		}
+
+		function zoomToFeature(e) {
+			map.fitBounds(e.target.getBounds());
+		}
+
+		function onEachFeature(feature, layer) {
+			layer.on({
+				mouseover: highlightFeature,
+				mouseout: resetHighlight,
+				click: zoomToFeature
+			});
+		}
+
+
+		// Generate map
+		$.getJSON( "data/nyc_ways_info.geojson", function( data ) {
+			n_buckets = 10
+			attribute = 'INSTAGRAM'
+
+			grades = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+			color_generator = chroma.scale(['#1a9850', '#ffffbf', '#d73027']).domain(grades);
+
+			plot(attribute, data);
+			addLegend();
+
+		});
+
+		function get_value(data, attribute){
+			current = parseFloat(data.properties[attribute])
+			length = parseFloat(data.properties['LENGTH'])
+			if (length>0)
+				return (current/length);
+			else return 0;
+		}
+
+	</script>
+</body>
+</html>
