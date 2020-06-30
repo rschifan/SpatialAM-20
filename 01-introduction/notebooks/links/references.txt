@@ -1,0 +1,6 @@
+https://basemaptutorial.readthedocs.io/en/latest/projections.html
+https://github.com/jorisvandenbossche/geopandas-tutorial
+https://proj.org/
+https://github.com/geopandas/scipy2018-geospatial-data
+https://github.com/pysal/scipy2019-intermediate-gds
+https://github.com/chendaniely/scipy-2019-pandas

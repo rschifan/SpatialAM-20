@@ -1,0 +1,4 @@
+https://postgis.net/docs/using_postgis_dbmanagement.html#shp2pgsql_usage
+https://postgis.net/
+https://www.postgresql.org/download/
+https://wiki.openstreetmap.org/wiki/Osmosis
